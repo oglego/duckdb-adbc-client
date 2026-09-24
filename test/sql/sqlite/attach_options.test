@@ -1,0 +1,39 @@
+# name: test/sql/sqlite/attach_options.test
+# description: Test the options accepted by ATTACH (TYPE adbc)
+# group: [sqlite]
+
+require adbc
+
+require-env ADBC_DRIVER_PATH
+
+# Base case
+statement ok
+ATTACH 'profile://./test/penguins.toml' AS sqlite_backticks (TYPE adbc, DELIMITER '``');
+
+# The delimiter must be exactly two characters
+statement error
+ATTACH 'profile://./test/penguins.toml' AS sqlite_bad_delimiter (TYPE adbc, DELIMITER '[');
+----
+must be exactly two characters
+
+statement error
+ATTACH 'profile://./test/penguins.toml' AS sqlite_bad_delimiter (TYPE adbc, DELIMITER '[[]');
+----
+must be exactly two characters
+
+# Unknown options are rejected
+statement error
+ATTACH 'profile://./test/penguins.toml' AS sqlite_unknown (TYPE adbc, NOT_AN_OPTION 1);
+----
+Unrecognized option for ADBC attach
+
+# Unknown options are rejected even when a valid DELIMITER is given
+statement error
+ATTACH 'profile://./test/penguins.toml' AS sqlite_unknown (TYPE adbc, DELIMITER '[]', NOT_AN_OPTION 1);
+----
+Unrecognized option for ADBC attach
+
+statement error
+ATTACH 'profile://./test/penguins.toml' AS sqlite_unknown (TYPE adbc, NOT_AN_OPTION 1, DELIMITER '[]');
+----
+Unrecognized option for ADBC attach
